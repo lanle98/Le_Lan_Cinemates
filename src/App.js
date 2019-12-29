@@ -1,26 +1,69 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { Component } from "react";
+import Header from "./components/Header";
+import List from "./components/List";
+import InfiniteScroll from "react-infinite-scroll-component";
+import "./App.css";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+export class App extends Component {
+  state = {
+    page: 1,
+    movies: []
+  };
+  componentDidMount(page) {
+    let api = "https://api.themoviedb.org/3",
+      find = "/discover/movie",
+      query = `?page=${page}&`,
+      api_key = "api_key=8b3aa7357a1283c0b7821398836c387f",
+      url = api + find + query + api_key;
+    console.log(url);
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        this.parseData(data);
+        console.log(data);
+      });
+  }
+
+  parseData = data => {
+    this.setState({
+      movies: this.state.movies.concat(data.results),
+      page: data.page
+    });
+  };
+
+  loadMore = () => {
+    let page_number = this.state.page;
+    this.componentDidMount(page_number + 1);
+  };
+
+  hover = () => {
+    console.log("hovered");
+  };
+
+  render() {
+    return (
+      <div>
+        <h1>Welcom to this site</h1>
+        <Header />
+        <div className="container-fluid">
+          <InfiniteScroll
+            dataLength={this.state.movies.length}
+            next={this.loadMore}
+            hasMore={true}
+            className="row"
+            loader={
+              <div className="loader" key={0}>
+                Loading ...
+              </div>
+            }
+          >
+            <List hover={this.hover} movies={this.state.movies} />
+          </InfiniteScroll>
+        </div>
+      </div>
+    );
+  }
 }
 
 export default App;
