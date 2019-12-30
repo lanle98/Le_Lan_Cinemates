@@ -1,18 +1,21 @@
 import React, { Component } from "react";
 import Header from "./components/Header";
 import List from "./components/List";
+import MovieInfo from "./components/MovieInfo";
 import InfiniteScroll from "react-infinite-scroll-component";
 import "./App.css";
 
 export class App extends Component {
   state = {
     page: 1,
-    movies: []
+    movies: [],
+
+    movieInfo: { overview: undefined, backdropPath: undefined }
   };
   componentDidMount(page) {
     let api = "https://api.themoviedb.org/3",
       find = "/discover/movie",
-      query = `?page=${page}&`,
+      query = `?page=${page}&primary_release_year=2019&`,
       api_key = "api_key=8b3aa7357a1283c0b7821398836c387f",
       url = api + find + query + api_key;
     console.log(url);
@@ -37,8 +40,24 @@ export class App extends Component {
     this.componentDidMount(page_number + 1);
   };
 
-  hover = () => {
-    console.log("hovered");
+  showInfo = (overview, backdrop_path) => {
+    console.log("clicked");
+    this.setState({ movieInfo: { overview, backdropPath: backdrop_path } });
+    document.querySelector(".modal").classList.add("show");
+  };
+
+  mouseEnter = e => {
+    let movies = document.querySelectorAll(".movie");
+    movies.forEach(movie => {
+      movie.classList.add("gray-scale");
+    });
+    e.target.classList.remove("gray-scale");
+  };
+  mouseLeave = () => {
+    let movies = document.querySelectorAll(".movie");
+    movies.forEach(movie => {
+      movie.classList.remove("gray-scale");
+    });
   };
 
   render() {
@@ -46,19 +65,25 @@ export class App extends Component {
       <div>
         <h1>Welcom to this site</h1>
         <Header />
+        <MovieInfo movieInfo={this.state.movieInfo} />
         <div className="container-fluid">
           <InfiniteScroll
             dataLength={this.state.movies.length}
             next={this.loadMore}
             hasMore={true}
-            className="row"
+            className="row m-4"
             loader={
               <div className="loader" key={0}>
                 Loading ...
               </div>
             }
           >
-            <List hover={this.hover} movies={this.state.movies} />
+            <List
+              mouseEnter={this.mouseEnter}
+              mouseLeave={this.mouseLeave}
+              movies={this.state.movies}
+              showInfo={this.showInfo}
+            />
           </InfiniteScroll>
         </div>
       </div>
