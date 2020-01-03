@@ -1,23 +1,30 @@
 import React, { Component } from "react";
+import Nav from "./components/Nav";
 import Header from "./components/Header";
 import List from "./components/List";
+import Filter from "./components/Filter";
 import MovieInfo from "./components/MovieInfo";
 import InfiniteScroll from "react-infinite-scroll-component";
-import "./App.css";
+import "./css/App.css";
 
 export class App extends Component {
   state = {
     page: 1,
     movies: [],
 
-    movieInfo: { overview: undefined, backdropPath: undefined }
+    movieInfo: {
+      title: undefined,
+      overview: undefined,
+      backdropPath: undefined,
+      trailer: undefined
+    }
   };
   componentDidMount(page) {
     let api = "https://api.themoviedb.org/3",
       find = "/discover/movie",
-      query = `?page=${page}&primary_release_year=2019&`,
+      pageNumber = `?page=${page}&`,
       api_key = "api_key=8b3aa7357a1283c0b7821398836c387f",
-      url = api + find + query + api_key;
+      url = api + find + pageNumber + api_key;
     console.log(url);
 
     fetch(url)
@@ -37,12 +44,26 @@ export class App extends Component {
 
   loadMore = () => {
     let page_number = this.state.page;
+
     this.componentDidMount(page_number + 1);
   };
 
-  showInfo = (overview, backdrop_path) => {
+  showInfo = (overview, backdrop_path, id, title) => {
     console.log("clicked");
-    this.setState({ movieInfo: { overview, backdropPath: backdrop_path } });
+    fetch(
+      `https://api.themoviedb.org/3/movie/${id}/videos?api_key=8b3aa7357a1283c0b7821398836c387f&language=en-US`
+    )
+      .then(res => res.json())
+      .then(data => {
+        this.setState({
+          movieInfo: {
+            overview,
+            backdropPath: backdrop_path,
+            trailer: data.results[0].key,
+            title: title
+          }
+        });
+      });
     document.querySelector(".modal").classList.add("show");
   };
 
@@ -60,18 +81,45 @@ export class App extends Component {
     });
   };
 
+  searchMovie = input => {
+    console.log(input);
+
+    let api = "https://api.themoviedb.org/3",
+      find = "/search/movie",
+      query = `?query=${input}&`,
+      pageNumber = `?page=${this.state.page}&`,
+      api_key = "api_key=8b3aa7357a1283c0b7821398836c387f",
+      url = api + find + query + pageNumber + api_key;
+    console.log(url);
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        this.parseData(data);
+        console.log(data);
+      });
+
+    this.setState({ movies: [] });
+  };
+
   render() {
     return (
       <div>
-        <h1>Welcom to this site</h1>
-        <Header />
+        <Nav searchMovie={this.searchMovie} />
+        <Header
+          mouseEnter={this.mouseEnter}
+          mouseLeave={this.mouseLeave}
+          movies={this.state.movies}
+          showInfo={this.showInfo}
+        />
+        <Filter />
         <MovieInfo movieInfo={this.state.movieInfo} />
         <div className="container-fluid">
           <InfiniteScroll
             dataLength={this.state.movies.length}
             next={this.loadMore}
             hasMore={true}
-            className="row m-4"
+            className="row movie-wrapper"
             loader={
               <div className="loader" key={0}>
                 Loading ...
